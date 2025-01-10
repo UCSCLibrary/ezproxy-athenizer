@@ -5,19 +5,31 @@
       var url = $('input#athenizerUrl').val();
       var cleanurl = '';
       var pos = 0;
-      // Deal with different URL strings
+
+      // Remove the OCA prefix from links
       if ((url.search(/oca\.ucsc\.edu/ig) !== -1) && (url.search(/url=/ig) !== -1)) {
-        // This is a link with an OCA prefix
         pos = url.search(/url=/ig) + 4;
         cleanurl = url.substring(pos);
-      } else if (url.search(/\.oca\.ucsc\.edu/ig) !== -1) {
-        // This is an OCA proxied link
-        pos = url.search(/\.oca\.ucsc\.edu/ig);
-        cleanurl = 'https://' + url.substring(8, pos).replace(/-/g, '.') + url.substring(pos).replace('.oca.ucsc.edu', '');
       } else {
-        // This is not an OCA link, pass thru to athenize
         cleanurl = url;
       }
+
+      // Transform proxied OCA URLs, where .oca.ucsc.edu has replaced the domain
+      // While loop because there are rare proxied links in url params used for referral
+      while (cleanurl.search(/\.oca\.ucsc\.edu/ig) !== -1) {
+        // Find the first remaining proxied domain, and the preceding 'http'
+        // The goal is to identify the domain section and leave the rest as-is
+        let p = cleanurl.indexOf('.oca.ucsc.edu');
+        let start = cleanurl.lastIndexOf('http', p);
+        // Split the URL up make this easier
+        let prefix = cleanurl.slice(0, start);
+        // Convert - back to . in the proxied domain and remove OCA
+        let replace = cleanurl.substring(start, p).replace(/-/g, '.') + cleanurl.substring(p, p+13).replace('.oca.ucsc.edu', '');
+        let suffix = cleanurl.slice(p + 13);
+        // Then reassemble
+        cleanurl = prefix + replace + suffix;
+      }
+
       // Take the clean URL and athenize
       var athenized = 'https://go.openathens.net/redirector/ucsc.edu?url=' + encodeURIComponent( cleanurl );
       var form = document.getElementById('athenizer');

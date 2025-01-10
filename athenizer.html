@@ -1,0 +1,49 @@
+<script>
+  $( document ).ready(function() {
+    $( '#athenizer' ).submit(function( event ) {
+      $('#tocopy').remove();
+      var url = $('input#athenizerUrl').val();
+      var cleanurl = '';
+      var pos = 0;
+      // Deal with different URL strings
+      if ((url.search(/oca\.ucsc\.edu/ig) !== -1) && (url.search(/url=/ig) !== -1)) {
+        // This is a link with an OCA prefix
+        pos = url.search(/url=/ig) + 4;
+        cleanurl = url.substring(pos);
+      } else if (url.search(/\.oca\.ucsc\.edu/ig) !== -1) {
+        // This is an OCA proxied link
+        pos = url.search(/\.oca\.ucsc\.edu/ig);
+        cleanurl = 'https://' + url.substring(8, pos).replace(/-/g, '.') + url.substring(pos).replace('.oca.ucsc.edu', '');
+      } else {
+        // This is not an OCA link, pass thru to athenize
+        cleanurl = url;
+      }
+      // Take the clean URL and athenize
+      var athenized = 'https://go.openathens.net/redirector/ucsc.edu?url=' + encodeURIComponent( cleanurl );
+      var form = document.getElementById('athenizer');
+      var input = document.createElement('input');
+        input.type = 'text'
+        input.name = 'tocopy';
+        input.id = 'tocopy';
+        input.style = 'margin-left: -5000px;';
+        input.setAttribute('value',athenized);
+        form.appendChild(input);
+      $('#itis').html('Link: <a target="_blank" href="' + athenized + '" style="text-decoration: underline;">' + athenized + '</a>');
+      $('#copy').show();
+
+      event.preventDefault();
+    });
+  });
+
+  $(document).on('click', '#copy' , function() {
+    $('#tocopy').select();
+    document.execCommand('copy');
+    $('#copytip').show().delay(1000).fadeOut('slow');
+  });
+</script>
+
+<form action="" id="athenizer" method="get"><input aria-label="URL" id="athenizerUrl" name="athenizerUrl" placeholder="Enter URL to Athenize" style="width: 75%" type="text" /> <input id="submit" type="submit" value="Convert link" />&nbsp;</form>
+
+<p id="itis" style="margin-top: 10px; font-size: 1.3em;">&nbsp;</p>
+
+<p><button id="copy" style="display: none;">Copy link</button><span id="copytip" style="display:none;color:red;padding-left:10px;">Copied!</span></p>
